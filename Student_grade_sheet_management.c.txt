@@ -1,0 +1,183 @@
+
+#include <stdio.h>
+#include <string.h>
+#define SUBJECTS 5
+#define MAX 100
+struct Student {
+    int id;
+    char name[50];
+    char branch[20];
+    int marks[SUBJECTS];
+    int total;
+    float percentage;
+    char grade;
+};
+/* calculate total, percentage and grade */
+void calculate(struct Student *s) {
+    s->total = 0;
+    for (int i = 0; i < SUBJECTS; i++)
+        s->total += s->marks[i];
+
+    s->percentage = (s->total / (float)(SUBJECTS * 100)) * 100;
+
+    if (s->percentage >= 90) s->grade = 'A';
+    else if (s->percentage >= 75) s->grade = 'B';
+    else if (s->percentage >= 60) s->grade = 'C';
+    else if (s->percentage >= 50) s->grade = 'D';
+    else s->grade = 'F';
+}
+
+/* print grade sheet */
+void display(struct Student s) {
+    printf("\n============================================================\n");
+    printf("              ███  STUDENT GRADE SHEET  ███                 \n");
+    printf("============================================================\n");
+
+    printf("Name     : %s\n", s.name);
+    printf("ID       : %d\n", s.id);
+    printf("Branch   : %s\n\n", s.branch);
+
+    printf("Subjects           Marks\n");
+    printf("------------------------------------------------------------\n");
+    for (int i = 0; i < SUBJECTS; i++)
+        printf("Subject %-10d %3d\n", i + 1, s.marks[i]);
+
+    printf("------------------------------------------------------------\n");
+    printf("Total Marks : %d / %d\n", s.total, SUBJECTS * 100);
+    printf("Percentage  : %.2f %%\n", s.percentage);
+    printf("Grade       : %c\n", s.grade);
+
+    printf("============================================================\n");
+}
+
+/* write record to file */
+void saveToFile(struct Student s) {
+    FILE *fp = fopen("students.txt", "ab");
+    fwrite(&s, sizeof(s), 1, fp);
+    fclose(fp);
+}
+
+/* search functions */
+void searchByID(int id) {
+    FILE *fp = fopen("students.txt", "rb");
+    struct Student s;
+    int found = 0;
+
+    while (fread(&s, sizeof(s), 1, fp)) {
+        if (s.id == id) {
+            display(s);
+            found = 1;
+            break;
+        }
+    }
+    if (!found)
+        printf("Student not found!\n");
+
+    fclose(fp);
+}
+
+void searchByName(char name[]) {
+    FILE *fp = fopen("students.txt", "rb");
+    struct Student s;
+    int found = 0;
+
+    while (fread(&s, sizeof(s), 1, fp)) {
+        if (strcmp(s.name, name) == 0) {
+            display(s);
+            found = 1;
+        }
+    }
+    if (!found)
+        printf("Student not found!\n");
+
+    fclose(fp);
+}
+
+void displayByBranch(char branch[]) {
+    FILE *fp = fopen("students.txt", "rb");
+    struct Student s;
+    int found = 0;
+
+    while (fread(&s, sizeof(s), 1, fp)) {
+        if (strcmp(s.branch, branch) == 0) {
+            display(s);
+            found = 1;
+        }
+    }
+    if (!found)
+        printf("No students found in this branch!\n");
+
+    fclose(fp);
+}
+
+int main() {
+    struct Student s;
+    int n, choice, id;
+    char name[50], branch[20];
+
+    FILE *fp = fopen("students.txt", "wb"); // clear old data
+    fclose(fp);
+
+    printf("Enter number of students: ");
+    scanf("%d", &n);
+
+    for (int i = 0; i < n; i++) {
+        printf("\nEnter details of Student %d\n", i + 1);
+
+        printf("ID: ");
+        scanf("%d", &s.id);
+
+        printf("Name: ");
+        scanf(" %[^\n]", s.name);
+
+        printf("Branch: ");
+        scanf("%s", s.branch);
+
+        printf("Enter marks for %d subjects:\n", SUBJECTS);
+        for (int j = 0; j < SUBJECTS; j++)
+            scanf("%d", &s.marks[j]);
+
+        calculate(&s);
+        saveToFile(s);
+    }
+
+    do {
+        printf("\n\n========== MENU ==========");
+        printf("\n1. Search by ID");
+        printf("\n2. Search by Name");
+        printf("\n3. Display students by Branch");
+        printf("\n4. Exit");
+        printf("\nEnter choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+        case 1:
+            printf("Enter ID: ");
+            scanf("%d", &id);
+            searchByID(id);
+            break;
+
+        case 2:
+            printf("Enter Name: ");
+            scanf(" %[^\n]", name);
+            searchByName(name);
+            break;
+
+        case 3:
+            printf("Enter Branch: ");
+            scanf("%s", branch);
+            displayByBranch(branch);
+            break;
+
+        case 4:
+            printf("Exiting program...\n");
+            break;
+
+        default:
+            printf("Invalid choice!\n");
+        }
+
+    } while (choice != 4);
+
+    return 0;
+}
